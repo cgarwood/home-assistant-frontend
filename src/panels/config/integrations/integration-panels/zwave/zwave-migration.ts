@@ -79,86 +79,101 @@ export class ZwaveMigration extends LitElement {
               "ui.panel.config.zwave.migration.introduction"
             )}
           </div>
-
-          ${this._step === 0
+          ${!this.hass.config.components.includes("mqtt")
             ? html`
-                <ha-card class="content" header="Introduction">
+                <ha-card class="content" header="MQTT Required">
                   <div class="card-content">
                     <p>
-                      This wizard will walk through the following steps to
-                      migrate from the legacy Z-Wave component to OpenZWave.
+                      OpenZWave requires MQTT. Please setup an MQTT broker and
+                      the MQTT integration to proceed with the migration.
                     </p>
-                    <ol>
-                      <li>Stop the Z-Wave network</li>
-                      <li>Configure and start ozwdaemon</li>
-                      <li>Set up the OpenZWave integration</li>
-                      <li>
-                        Migrate entities and devices to the new integration
-                      </li>
-                      <li>Remove legacy Z-Wave integration</li>
-                    </ol>
-                    <p>
-                      <b>
-                        Please take a backup or a snapshot of your environment
-                        before proceeding.
-                      </b>
-                    </p>
-                  </div>
-                  <div class="card-actions">
-                    <mwc-button @click=${this._continue}>
-                      Continue
-                    </mwc-button>
                   </div>
                 </ha-card>
               `
-            : ``}
-          ${this._step === 1
-            ? html`
-                <ha-card class="content" header="Stop Z-Wave Network">
-                  <div class="card-content">
-                    <p>
-                      We need to stop the Z-Wave network to perform the
-                      migration. Home Assistant will not be able to control
-                      Z-Wave devices while the network is stopped.
-                    </p>
-                    ${this._stoppingNetwork
-                      ? html`
-                          <div class="flex-container">
-                            <ha-circular-progress active></ha-circular-progress>
-                            <div><p>Stopping Z-Wave Network...</p></div>
-                          </div>
-                        `
-                      : ``}
-                  </div>
-                  <div class="card-actions">
-                    <mwc-button @click=${this._stopNetwork}>
-                      Stop Network
-                    </mwc-button>
-                  </div>
-                </ha-card>
-              `
-            : ``}
-          ${this._step === 2
-            ? html`
-                <ha-card class="content" header="Set up ozwdaemon">
-                  <div class="card-content">
-                    <p>
-                      Now it's time to set up ozwdaemon, which handles
-                      communication between Home Assistant and OpenZWave.
-                    </p>
-                    ${!this.hass.config.components.includes("hassio")
-                      ? html`
+            : html`
+                ${this._step === 0
+                  ? html`
+                      <ha-card class="content" header="Introduction">
+                        <div class="card-content">
                           <p>
-                            Install the OpenZWave addon from the
-                            <a
-                              href="/hassio/addon/core_zwave/info"
-                              target="_blank"
-                              >addon store</a
-                            >. You will need to provide the following
-                            configuration:
+                            This wizard will walk through the following steps to
+                            migrate from the legacy Z-Wave component to
+                            OpenZWave.
                           </p>
-                          ${this._migrationConfig
+                          <ol>
+                            <li>Stop the Z-Wave network</li>
+                            <li>Configure and start ozwdaemon</li>
+                            <li>Set up the OpenZWave integration</li>
+                            <li>
+                              Migrate entities and devices to the new
+                              integration
+                            </li>
+                            <li>Remove legacy Z-Wave integration</li>
+                          </ol>
+                          <p>
+                            <b>
+                              Please take a backup or a snapshot of your
+                              environment before proceeding.
+                            </b>
+                          </p>
+                        </div>
+                        <div class="card-actions">
+                          <mwc-button @click=${this._continue}>
+                            Continue
+                          </mwc-button>
+                        </div>
+                      </ha-card>
+                    `
+                  : ``}
+                ${this._step === 1
+                  ? html`
+                      <ha-card class="content" header="Stop Z-Wave Network">
+                        <div class="card-content">
+                          <p>
+                            We need to stop the Z-Wave network to perform the
+                            migration. Home Assistant will not be able to
+                            control Z-Wave devices while the network is stopped.
+                          </p>
+                          ${this._stoppingNetwork
                             ? html`
+                                <div class="flex-container">
+                                  <ha-circular-progress
+                                    active
+                                  ></ha-circular-progress>
+                                  <div><p>Stopping Z-Wave Network...</p></div>
+                                </div>
+                              `
+                            : ``}
+                        </div>
+                        <div class="card-actions">
+                          <mwc-button @click=${this._stopNetwork}>
+                            Stop Network
+                          </mwc-button>
+                        </div>
+                      </ha-card>
+                    `
+                  : ``}
+                ${this._step === 2
+                  ? html`
+                      <ha-card class="content" header="Set up ozwdaemon">
+                        <div class="card-content">
+                          <p>
+                            Now it's time to set up ozwdaemon, which handles
+                            communication between Home Assistant and OpenZWave.
+                          </p>
+                          ${!this.hass.config.components.includes("hassio")
+                            ? html`
+                                <p>
+                                  Install the OpenZWave addon from the
+                                  <a
+                                    href="/hassio/addon/core_zwave/info"
+                                    target="_blank"
+                                    >addon store</a
+                                  >. You will need to provide the following
+                                  configuration:
+                                </p>
+                                ${this._migrationConfig
+                                  ? html`
                     <p><blockquote>
                     device: ${this._migrationConfig.usb_path}<br>
                     network_key: ${this._migrationConfig.network_key}
@@ -168,46 +183,48 @@ export class ZwaveMigration extends LitElement {
                             Continue to set up the OpenZWave integration and
                             migrate your devices and entities.
                           </p>`
-                            : ``}
-                        `
-                      : html`
-                          <p>
-                            If you're using Home Assistant Core in Docker or a
-                            Python venv, see the
-                            <a
-                              href="https://github.com/OpenZWave/qt-openzwave/blob/master/README.md"
-                              target="_blank"
-                            >
-                              ozwdaemon readme
-                            </a>
-                            for setup instructions.
-                          </p>
-                          <p>
-                            Here's the current Z-Wave configuration. You'll need
-                            these values when setting up ozwdaemon.
-                          </p>
-                          ${this._migrationConfig
-                            ? html`
+                                  : ``}
+                              `
+                            : html`
+                                <p>
+                                  If you're using Home Assistant Core in Docker
+                                  or a Python venv, see the
+                                  <a
+                                    href="https://github.com/OpenZWave/qt-openzwave/blob/master/README.md"
+                                    target="_blank"
+                                  >
+                                    ozwdaemon readme
+                                  </a>
+                                  for setup instructions.
+                                </p>
+                                <p>
+                                  Here's the current Z-Wave configuration.
+                                  You'll need these values when setting up
+                                  ozwdaemon.
+                                </p>
+                                ${this._migrationConfig
+                                  ? html`
                     <p><blockquote>
                     USB Path: ${this._migrationConfig.usb_path}<br>
                     Network Key: ${this._migrationConfig.network_key}
                     </blockquote></p>`
-                            : ``}
-                          <p>
-                            Once ozwdaemon is installed and running, click
-                            Continue to set up the OpenZWave integration and
-                            migrate your devices and entities.
-                          </p>
-                        `}
-                  </div>
-                  <div class="card-actions">
-                    <mwc-button @click=${this._stopNetwork}>
-                      Continue
-                    </mwc-button>
-                  </div>
-                </ha-card>
-              `
-            : ``}
+                                  : ``}
+                                <p>
+                                  Once ozwdaemon is installed and running, click
+                                  Continue to set up the OpenZWave integration
+                                  and migrate your devices and entities.
+                                </p>
+                              `}
+                        </div>
+                        <div class="card-actions">
+                          <mwc-button @click=${this._stopNetwork}>
+                            Continue
+                          </mwc-button>
+                        </div>
+                      </ha-card>
+                    `
+                  : ``}
+              `}
         </ha-config-section>
       </hass-tabs-subpage>
     `;
@@ -223,7 +240,7 @@ export class ZwaveMigration extends LitElement {
     }
   }
 
-  private _continue(e): void {
+  private _continue(): void {
     this._step++;
   }
 

@@ -17,9 +17,11 @@ import "../../../../../components/ha-svg-icon";
 import "../../../../../components/ha-icon-next";
 import { getSignedPath } from "../../../../../data/auth";
 import {
+  fetchLogConfig,
   fetchNetworkStatus,
   fetchNodeStatus,
   NodeStatus,
+  ZWaveJSLogConfig,
   ZWaveJSNetwork,
   ZWaveJSNode,
 } from "../../../../../data/zwave_js";
@@ -54,6 +56,8 @@ class ZWaveJSConfigDashboard extends LitElement {
   @internalProperty() private _status = "unknown";
 
   @internalProperty() private _icon = mdiCircle;
+
+  @internalProperty() private _logConfig?: ZWaveJSLogConfig;
 
   protected firstUpdated() {
     if (this.hass) {
@@ -135,7 +139,7 @@ class ZWaveJSConfigDashboard extends LitElement {
                         "ui.panel.config.zwave_js.dashboard.nodes_ready"
                       )}:
                       ${this._nodes?.filter((node) => node.ready).length ?? 0} /
-                      ${this._network.controller.nodes.length}
+                      ${this._network.controller.nodes.length}<br />
                     </div>
                   </div>
                   <div class="card-actions">
@@ -165,6 +169,21 @@ class ZWaveJSConfigDashboard extends LitElement {
                         "ui.panel.config.zwave_js.common.remove_node"
                       )}
                     </mwc-button>
+                    ${this._logConfig
+                      ? html`
+                          ${this._logConfig.level === 5
+                            ? html`
+                                <mwc-button @click=${this._disableDebugLog}
+                                  >Disable Debug Logging</mwc-button
+                                >
+                              `
+                            : html`
+                                <mwc-button @click=${this._enableDebugLog}
+                                  >Enable Debug Logging</mwc-button
+                                >
+                              `}
+                        `
+                      : ``}
                   </div>
                 </ha-card>
               `
@@ -189,6 +208,14 @@ class ZWaveJSConfigDashboard extends LitElement {
       this._icon = mdiCheckCircle;
     }
     this._fetchNodeStatus();
+    this._fetchLogStatus();
+  }
+
+  private async _fetchLogStatus() {
+    if (!this.configEntryId) {
+      return;
+    }
+    this._logConfig = await fetchLogConfig(this.hass!, this.configEntryId);
   }
 
   private async _fetchNodeStatus() {
@@ -211,6 +238,24 @@ class ZWaveJSConfigDashboard extends LitElement {
     showZWaveJSRemoveNodeDialog(this, {
       entry_id: this.configEntryId!,
     });
+  }
+
+  private async _enableDebugLog() {
+    await this.hass.callWS({
+      type: "zwave_js/update_log_config",
+      entry_id: this.configEntryId,
+      config: { level: "debug" },
+    });
+    // need to _fetchLogStatus once we get response from server
+  }
+
+  private async _disableDebugLog() {
+    await this.hass.callWS({
+      type: "zwave_js/update_log_config",
+      entry_id: this.configEntryId,
+      config: { level: "info" },
+    });
+    // need to _fetchLogStatus once we get response from server
   }
 
   private async _dumpDebugClicked() {

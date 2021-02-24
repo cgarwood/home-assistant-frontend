@@ -28,6 +28,14 @@ export interface ZWaveJSNode {
   status: number;
 }
 
+export interface ZWaveJSLogConfig {
+  enabled: boolean;
+  filename: string;
+  force_console: boolean;
+  level: number;
+  log_to_file: boolean;
+}
+
 export enum NodeStatus {
   Unknown,
   Asleep,
@@ -56,6 +64,15 @@ export const fetchNodeStatus = (
     type: "zwave_js/node_status",
     entry_id,
     node_id,
+  });
+
+export const fetchLogConfig = (
+  hass: HomeAssistant,
+  entry_id: string
+): Promise<ZWaveJSLogConfig> =>
+  hass.callWS({
+    type: "zwave_js/get_log_config",
+    entry_id,
   });
 
 export const getIdentifiersFromDevice = function (
